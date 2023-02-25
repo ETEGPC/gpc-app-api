@@ -1,0 +1,170 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Manager {
+  id            String             @id @default(auto()) @map("_id") @db.ObjectId
+  name          String
+  lastname      String
+  email         String
+  password      String
+  webPushToken  ManagerPushToken[]
+  expoPushToken String[]
+
+  @@map("managers")
+}
+
+model ManagerPushToken {
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  endpoint  String
+  Manager   Manager      @relation(references: [id], fields: [managerId])
+  managerId String       @unique @db.ObjectId
+  keys      ManagerKeys?
+
+  @@map("managers_push_token")
+}
+
+model ManagerKeys {
+  id               String           @id @default(auto()) @map("_id") @db.ObjectId
+  p256dh           String
+  auth             String
+  ManagerPushToken ManagerPushToken @relation(references: [id], fields: [pushTokenId])
+  pushTokenId      String           @unique @db.ObjectId
+
+  @@map("managers_push_token_keys")
+}
+
+model Parent {
+  id            String            @id @default(auto()) @map("_id") @db.ObjectId
+  fullName      String
+  relatives     Relative[]
+  solicitations Solicitation[]
+  email         String
+  password      String
+  accountStatus AccountStatus @default(unauthorized) // unvalidated or actived
+  pushToken     ParentPushToken[]
+
+  @@map("parents")
+}
+
+model ParentPushToken {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  endpoint String
+  Parent   Parent @relation(references: [id], fields: [parentId])
+  parentId String @unique @db.ObjectId
+  keys     Keys?
+
+  @@map("parents_push_token")
+}
+
+model Keys {
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  p256dh           String
+  auth             String
+  ParentsPushToken ParentPushToken @relation(references: [id], fields: [pushTokenId])
+  pushTokenId      String          @unique @db.ObjectId
+
+  @@map("parents_push_token_keys")
+}
+
+model Relative {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  fullName    String
+  kinship     String
+  schoolClass String
+  parent      Parent @relation(fields: [parentId], references: [id])
+  parentId    String @db.ObjectId
+
+  @@map("relatives")
+}
+
+model Notice {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  schoolClass String
+  createdAt   DateTime @default(now())
+
+  @@map("notices")
+}
+
+model Event {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  date        DateTime
+
+  @@map("events")
+}
+
+model Schedules {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  url         String
+  fileId      String
+  schoolClass String @unique
+
+  @@map("schedules")
+}
+
+model Solicitation {
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  parent         Parent    @relation(fields: [parentId], references: [id])
+  parentId       String    @db.ObjectId
+  type           String
+  student        String
+  mother         String?
+  father         String?
+  startYear      String?
+  completionYear String?
+  phone          String?
+  schoolClass    String
+  status         String
+  solicitatedAt  DateTime  @default(now())
+  finishedAt     DateTime?
+
+  @@map("solicitations")
+}
+
+model News {
+  id    String   @id @default(auto()) @map("_id") @db.ObjectId
+  title String
+  url   String
+  image Image?
+  date  DateTime
+
+  @@map("news")
+}
+
+model Image {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  imageUrl String
+  imageId  String
+  news     News   @relation(fields: [newsId], references: [id])
+  newsId   String @unique @db.ObjectId
+
+  @@map("images")
+}
+
+model Message {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  author    String
+  room      String
+  message   String
+  createdAt DateTime @default(now())
+
+  @@map("messages")
+}
+
+enum AccountStatus {
+  unauthorized
+  unvalidated
+  actived
+}
