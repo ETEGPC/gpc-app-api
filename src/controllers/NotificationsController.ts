@@ -97,19 +97,18 @@ export default {
           title: `Nova solicitação de documento!`,
         }]
 
-        await expo.sendPushNotificationsAsync(notification).then(r => {
-          res.status(200).json({
+        await expo.sendPushNotificationsAsync(notification).then(() => {
+          console.log({
             message: 'Notificação enviada com sucesso.'
-          });
+          })
         }).catch(err => {
           console.error(err);
-          res.status(500).json({
-            message: 'erro'
-          });
         });
+      });
 
-
-      })
+      res.status(200).json({
+        message: 'Notificação enviada com sucesso.'
+      });
     }).catch(err => {
       console.error(err);
       res.status(500).json({
@@ -178,9 +177,6 @@ export default {
           })
         }).catch(err => {
           console.error(err);
-          // res.status(500).json({
-          //   message: 'erro'
-          // });
         });
       });
 
