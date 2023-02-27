@@ -173,17 +173,20 @@ export default {
         }]
 
         await expo.sendPushNotificationsAsync(notification).then(() => {
-          res.status(200).json({
-            message: 'Notificação enviada com sucesso.'
-          });
+          console.log({
+            message: 'Notificações enviadas com sucesso.'
+          })
         }).catch(err => {
           console.error(err);
-          res.status(500).json({
-            message: 'erro'
-          });
-        })
+          // res.status(500).json({
+          //   message: 'erro'
+          // });
+        });
       });
 
+      res.status(200).json({
+        message: 'Conta criada com sucesso.'
+      });
       return;
     }).catch(err => {
       console.error(err);
