@@ -47,7 +47,7 @@ model Parent {
   fullName      String
   relatives     Relative[]
   solicitations Solicitation[]
-  email         String
+  email         String @unique
   password      String
   accountStatus AccountStatus @default(unauthorized) // unvalidated or actived
   pushToken     ParentPushToken[]

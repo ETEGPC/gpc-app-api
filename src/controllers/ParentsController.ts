@@ -6,7 +6,7 @@ import { parentSchema } from '../yupSchemas/schemas';
 import { ValidationError } from "yup";
 import { IToken } from '../@types/interfaces';
 import path from 'path';
-import sendEmail from '../utils/sendEmail';
+import { sendEmail, sendRecoverEmailToParent } from '../utils/sendEmail';
 
 export default {
   async create(req: Request, res: Response, next: NextFunction) {
@@ -300,4 +300,64 @@ export default {
       return res.status(500).sendFile(path.join(__dirname, '..', '..', 'public', 'validate', 'error.html'));
     });
   },
+
+  async sendRecoverEmail(req: Request, res: Response) {
+    const { email } = req.query;
+
+    if (!email) {
+      return res.status(400).json({
+        message: 'Não foi possível encontrar a conta solicitada para recuperar a senha'
+      });
+    } else {
+      prismaClient.parent.findUnique({
+        where: { email: `${email}` }
+      }).then(parent => {
+        sendRecoverEmailToParent(`${email}`, `${process.env.BASE_URL}/parents/recoverpass/${parent?.id}`);
+        res.status(200).json({
+          message: 'Foi enviado um link de recuperação de senha para seu email.'
+        });
+      }).catch(err => {
+        console.error(err);
+        res.status(400).json({
+          message: 'Não foi possível achar nenhuma conta com o email inserido.'
+        })
+      })
+    }
+  },
+
+  async recoverPass(req: Request, res: Response) {
+    const { id } = req.params;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({
+        message: 'Você deve inserir uma senha válida com caracteres alfanumérico para que possamos atualizar sua senha.'
+      });
+    } else {
+      bcrypt.hash(password, Number(process.env.SALT_ROUNDS)).then(async (hash) => {
+        const newPass = hash;
+        
+        await prismaClient.parent.update({
+          where: { id: `${id}` },
+          data: {
+            password: newPass
+          }
+        }).then(() => {
+          res.status(200).json({
+            message: 'Senha alterada com sucesso.'
+          })
+        }).catch(err => {
+          console.error(err);
+          res.status(500).json({
+            message: 'Houve um erro ao alterar sua senha. Tente novamente mais tarde.'
+          })
+        })
+      }).catch(err => {
+        console.error(err);
+        return res.status(500).json({
+          message: 'Houve um erro ao salvar sua senha, tente novamente mais tarde.'
+        });
+      });
+    }
+  }
 };
